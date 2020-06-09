@@ -77,7 +77,7 @@ contract TokenExchanger is OnlyOwnerModule {
         uint256 _minConversionRate
     )
         external
-        onlyWalletOwner(_wallet)
+        onlyOwnerOrModule(_wallet)
         onlyWhenUnlocked(_wallet)
         returns(uint256)
     {

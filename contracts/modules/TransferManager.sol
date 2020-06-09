@@ -132,7 +132,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
         }
     }
 
-    function addModule(address _wallet, address _module) external override(BaseModule, OnlyOwnerModule) onlyWalletOwner(_wallet) {
+    function addModule(address _wallet, address _module) external override(BaseModule, OnlyOwnerModule) onlyOwnerOrModule(_wallet) {
         require(registry.isRegisteredModule(_module), "BM: module is not registered");
         IWallet(_wallet).authoriseModule(_module, true);
     }
@@ -155,7 +155,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
         bytes calldata _data
     )
         external
-        onlyWalletOwner(_wallet)
+        onlyOwnerOrModule(_wallet)
         onlyWhenUnlocked(_wallet)
     {
         if (isWhitelisted(_wallet, _to)) {
@@ -188,7 +188,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
         uint256 _amount
     )
         external
-        onlyWalletOwner(_wallet)
+        onlyOwnerOrModule(_wallet)
         onlyWhenUnlocked(_wallet)
     {
         if (isWhitelisted(_wallet, _spender)) {
@@ -225,7 +225,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
         bytes calldata _data
     )
         external
-        onlyWalletOwner(_wallet)
+        onlyOwnerOrModule(_wallet)
         onlyWhenUnlocked(_wallet)
     {
         // Make sure we don't call a module, the wallet itself, or a supported ERC20
@@ -260,7 +260,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
         bytes calldata _data
     )
         external
-        onlyWalletOwner(_wallet)
+        onlyOwnerOrModule(_wallet)
         onlyWhenUnlocked(_wallet)
     {
         // Make sure we don't call a module, the wallet itself, or a supported ERC20
@@ -286,7 +286,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
         address _target
     )
         external
-        onlyWalletOwner(_wallet)
+        onlyOwnerOrModule(_wallet)
         onlyWhenUnlocked(_wallet)
     {
         require(!isWhitelisted(_wallet, _target), "TT: target already whitelisted");
@@ -306,7 +306,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
         address _target
     )
         external
-        onlyWalletOwner(_wallet)
+        onlyOwnerOrModule(_wallet)
         onlyWhenUnlocked(_wallet)
     {
         require(isWhitelisted(_wallet, _target), "TT: target not whitelisted");
@@ -351,7 +351,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
         bytes32 _id
     )
         external
-        onlyWalletOwner(_wallet)
+        onlyOwnerOrModule(_wallet)
         onlyWhenUnlocked(_wallet)
     {
         require(configs[_wallet].pendingActions[_id] > 0, "TT: unknown pending action");
@@ -365,7 +365,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
      * @param _wallet The target wallet.
      * @param _newLimit The new limit.
      */
-    function changeLimit(address _wallet, uint256 _newLimit) external onlyWalletOwner(_wallet) onlyWhenUnlocked(_wallet) {
+    function changeLimit(address _wallet, uint256 _newLimit) external onlyOwnerOrModule(_wallet) onlyWhenUnlocked(_wallet) {
         changeLimit(_wallet, _newLimit, securityPeriod);
     }
 
@@ -374,7 +374,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
      * The limit is disabled by setting it to an arbitrary large value.
      * @param _wallet The target wallet.
      */
-    function disableLimit(address _wallet) external onlyWalletOwner(_wallet) onlyWhenUnlocked(_wallet) {
+    function disableLimit(address _wallet) external onlyOwnerOrModule(_wallet) onlyWhenUnlocked(_wallet) {
         disableLimit(_wallet, securityPeriod);
     }
 
