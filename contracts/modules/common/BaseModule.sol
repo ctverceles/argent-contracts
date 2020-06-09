@@ -108,17 +108,6 @@ abstract contract BaseModule is IModule {
     }
 
     /**
-    * @dev Implementation of the getRequiredSignatures from the IModule interface.
-    * If not overriden the number of signatures required is large to avoid errors.
-    * @param _wallet The target wallet.
-    * @param _data The data of the relayed transaction.
-    * @return The number of required signatures and the wallet owner signature requirement.
-    */
-    function getRequiredSignatures(address _wallet, bytes calldata _data) external virtual override view returns (uint256, OwnerSignature) {
-        return (1000,OwnerSignature.Required);
-    }
-
-    /**
     * @dev Utility method enbaling anyone to recover ERC20 token sent to the
     * module by mistake and transfer them to the Module Registry.
     * @param _token The token to recover.
