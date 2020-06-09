@@ -16,6 +16,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.6.9;
 
+import "./common/Utils.sol";
 import "./common/OnlyOwnerModule.sol";
 import "./common/BaseTransfer.sol";
 import "./common/LimitManager.sol";
@@ -29,7 +30,7 @@ import "../../lib/other/ERC20.sol";
  * This module is the V2 of TokenTransfer.
  * @author Julien Niset - <julien@argent.xyz>
  */
-contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
+contract TransferManager is BaseTransfer, LimitManager, OnlyOwnerModule {
 
     bytes32 constant NAME = "TransferManager";
 
@@ -473,7 +474,7 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
     */
     function isValidSignature(bytes32 _msgHash, bytes memory _signature) public view returns (bytes4) {
         require(_signature.length == 65, "TM: invalid signature length");
-        address signer = recoverSigner(_msgHash, _signature, 0);
+        address signer = Utils.recoverSigner(_msgHash, _signature, 0);
         require(isOwner(msg.sender, signer), "TM: Invalid signer");
         return ERC1271_ISVALIDSIGNATURE_BYTES32;
     }
@@ -520,44 +521,5 @@ contract TransferManager is OnlyOwnerModule, BaseTransfer, LimitManager {
             !IWallet(_wallet).authorised(_contract) && // not an authorised module
             (priceProvider.cachedPrices(_contract) == 0 || isLimitDisabled(_wallet)), // not an ERC20 listed in the provider (or limit disabled)
             "TM: Forbidden contract");
-    }
-
-    // *************** Implementation of RelayerModule methods ********************* //
-
-    // Overrides refund to add the refund in the daily limit.
-    function refund(
-        address _wallet,
-        uint _gasUsed,
-        uint _gasPrice,
-        uint _gasLimit,
-        uint _signatures,
-        address _relayer
-    )
-        internal override
-    {
-        // 21000 (transaction) + 7620 (execution of refund) + 7324 (execution of updateDailySpent) + 672 to log the event + _gasUsed
-        uint256 amount = 36616 + _gasUsed;
-        if (_gasPrice > 0 && _signatures > 0 && amount <= _gasLimit) {
-            if (_gasPrice > tx.gasprice) {
-                amount = amount * tx.gasprice;
-            } else {
-                amount = amount * _gasPrice;
-            }
-            checkAndUpdateDailySpent(_wallet, amount);
-            invokeWallet(_wallet, _relayer, amount, EMPTY_BYTES);
-        }
-    }
-
-    // Overrides verifyRefund to add the refund in the daily limit.
-    function verifyRefund(address _wallet, uint _gasUsed, uint _gasPrice, uint _signatures) internal override view returns (bool) {
-        if (_gasPrice > 0 && _signatures > 0 && (
-            _wallet.balance < _gasUsed * _gasPrice ||
-            checkDailySpent(_wallet, _gasUsed * _gasPrice) == false ||
-            IWallet(_wallet).authorised(address(this)) == false
-        ))
-        {
-            return false;
-        }
-        return true;
     }
 }

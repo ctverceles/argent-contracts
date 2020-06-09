@@ -38,21 +38,15 @@ abstract contract BaseModule is IModule {
     // The address of the Guardian storage
     IGuardianStorage internal guardianStorage;
 
+    event ModuleCreated(bytes32 name);
+    event ModuleInitialised(address wallet);
+
     /**
      * @dev Throws if the wallet is locked.
      */
     modifier onlyWhenUnlocked(address _wallet) {
         verifyUnlocked(_wallet);
         _;
-    }
-
-    event ModuleCreated(bytes32 name);
-    event ModuleInitialised(address wallet);
-
-    constructor(IModuleRegistry _registry, IGuardianStorage _guardianStorage, bytes32 _name) public {
-        registry = _registry;
-        guardianStorage = _guardianStorage;
-        emit ModuleCreated(_name);
     }
 
     /**
@@ -75,7 +69,7 @@ abstract contract BaseModule is IModule {
      * @dev Throws if the sender is not an authorised module of the target wallet.
      */
     modifier onlyModule(address _wallet) {
-        require(isModule(_wallet, _sender), "BM: must be a module");
+        require(isModule(_wallet, msg.sender), "BM: must be a module");
         _;
     }
 
@@ -88,7 +82,11 @@ abstract contract BaseModule is IModule {
         _;
     }
 
-
+    constructor(IModuleRegistry _registry, IGuardianStorage _guardianStorage, bytes32 _name) public {
+        registry = _registry;
+        guardianStorage = _guardianStorage;
+        emit ModuleCreated(_name);
+    }
 
     /**
      * @dev Inits the module for a wallet by logging an event.
@@ -104,9 +102,20 @@ abstract contract BaseModule is IModule {
      * @param _wallet The target wallet.
      * @param _module The modules to authorise.
      */
-    function addModule(address _wallet, address _module) external virtual override strictOnlyWalletOwner(_wallet) {
+    function addModule(address _wallet, address _module) external virtual override onlyOwner(_wallet) {
         require(registry.isRegisteredModule(_module), "BM: module is not registered");
         IWallet(_wallet).authoriseModule(_module, true);
+    }
+
+    /**
+    * @dev Implementation of the getRequiredSignatures from the IModule interface.
+    * If not overriden the number of signatures required is large to avoid errors.
+    * @param _wallet The target wallet.
+    * @param _data The data of the relayed transaction.
+    * @return The number of required signatures and the wallet owner signature requirement.
+    */
+    function getRequiredSignatures(address _wallet, bytes calldata _data) external virtual override view returns (uint256, OwnerSignature) {
+        return (1000,OwnerSignature.Required);
     }
 
     /**
@@ -178,4 +187,5 @@ abstract contract BaseModule is IModule {
             revert("BM: wallet invoke reverted");
         }
     }
+
 }

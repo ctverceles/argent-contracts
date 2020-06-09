@@ -103,26 +103,6 @@ abstract contract LimitManager is BaseModule {
     }
 
     /**
-    * @dev Checks if a transfer is within the limit. If yes the daily spent is not updated.
-    * @param _wallet The target wallet.
-    * @param _amount The amount for the transfer
-    * @return true if the transfer is withing the daily limit.
-    */
-    function checkDailySpent(address _wallet, uint _amount) internal view returns (bool) {
-        (uint256 current, uint256 pending, uint256 changeAfter, uint256 alreadySpent, uint256 periodEnd) = getLimitAndDailySpent(_wallet);
-        uint256 currentLimit = currentLimit(current, pending, changeAfter);
-        if (currentLimit == LIMIT_DISABLED) {
-            return true;
-        }
-        // solium-disable-next-line security/no-block-members
-        if (periodEnd < now) {
-            return (_amount <= currentLimit);
-        } 
-        // should use safemath
-        return (alreadySpent.add(_amount) <= currentLimit);
-    }
-
-    /**
     * @dev Gets from storage the limit object of a wellet.
     * @param _wallet The target wallet.
     * @return the limit object.
